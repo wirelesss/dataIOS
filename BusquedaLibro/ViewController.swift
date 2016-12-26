@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SystemConfiguration
 
 class ViewController: UIViewController {
 
@@ -28,6 +29,14 @@ class ViewController: UIViewController {
     }
     
     @IBAction func actionClean(sender: AnyObject) {
+        print("Clean...")
+        self.inputISBN.text = ""
+        self.txtResultISBN.text = ""
+        self.resultRequest = false
+        self.responseRequest = ""
+    }
+    
+    @IBAction func actionLimpiar(sender: AnyObject) {
         print("Limpiar...")
         self.inputISBN.text = ""
         self.txtResultISBN.text = ""
@@ -78,81 +87,114 @@ class ViewController: UIViewController {
         print("Buscando libro por ISBN:"+codISBN+" ...")
         self.resultRequest = false
         
-        if !codISBN.isEmpty {
-            self.txtResultISBN.text = ""
-            self.responseRequest = ""
+        if isNetworkAvailable(){
+            if !codISBN.isEmpty {
+                self.txtResultISBN.text = ""
+                self.responseRequest = ""
             
-            // Peticion / Request - INI
-            let strURL = "https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:"+codISBN
-            let url = NSURL(string: strURL)
-            let sesion = NSURLSession.sharedSession()
+                // Peticion / Request - INI
+                let strURL = "https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:"+codISBN
+                let url = NSURL(string: strURL)
+                let sesion = NSURLSession.sharedSession()
 
-            let bloque1Asyncronico = { (datos: NSData?, resp: NSURLResponse?, error: NSError?) -> Void in
-                if error == nil {
-                    let texto = NSString(data: datos!, encoding: NSUTF8StringEncoding)
-                    print("result: ->"+(texto! as String))
-                    let resultRequest:String = (texto as? String)!
-                    if !resultRequest.isEmpty {
-                        self.responseRequest = resultRequest
-                        self.resultRequest = true
-                        let bloque2Asyncronico = {
-                            if self.responseRequest == "{}" {
-                                print("No se encontraron datos para el ISBN ingresado por el usuario")
-                                // Mostrar Alert - INI
-                                let alert = UIAlertController(title: "Sin informacion",
+                let bloque1Asyncronico = { (datos: NSData?, resp: NSURLResponse?, error: NSError?) -> Void in
+                    if error == nil {
+                        let texto = NSString(data: datos!, encoding: NSUTF8StringEncoding)
+                        print("result: ->"+(texto! as String))
+                        let resultRequest:String = (texto as? String)!
+                        if !resultRequest.isEmpty {
+                            self.responseRequest = resultRequest
+                            self.resultRequest = true
+                            let bloque2Asyncronico = {
+                                if self.responseRequest == "{}" {
+                                    print("No se encontraron datos para el ISBN ingresado por el usuario")
+                                    // Mostrar Alert - INI
+                                    let alert = UIAlertController(title: "Sin informacion",
                                                           message: "No hay información disponible para el ISBN ingresado",
                                                           preferredStyle: .Alert)
-                                alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
-                                self.presentViewController(alert, animated: true, completion: nil)
-                                // Mostrar Alert - FIN
+                                    alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
+                                    self.presentViewController(alert, animated: true, completion: nil)
+                                    // Mostrar Alert - FIN
+                                }
+                                else{
+                                    self.txtResultISBN.text = self.responseRequest
+                                }
                             }
-                            else{
-                                self.txtResultISBN.text = self.responseRequest
-                            }
+                            dispatch_async(dispatch_get_main_queue(), bloque2Asyncronico )
                         }
-                        dispatch_async(dispatch_get_main_queue(), bloque2Asyncronico )
-                    }
-                    else{
-                        print("El servicio de consulta de ISBN no está disponible")
-                        // Mostrar Alert - INI
-                        let alert = UIAlertController(title: "Sin servicio",
+                        else{
+                            print("El servicio de consulta de ISBN no está disponible")
+                            // Mostrar Alert - INI
+                            let alert = UIAlertController(title: "Sin servicio",
                                                       message: "El servicio de consulta de ISBN no está disponible",
                                                       preferredStyle: .Alert)
+                            alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
+                            self.presentViewController(alert, animated: true, completion: nil)
+                            // Mostrar Alert - FIN
+                        }
+                    }
+                    else{
+                        print("ocurrio un error durante el envio de la peticion")
+                        // Mostrar Alert - INI
+                        let alert = UIAlertController(title: "Resultado",
+                                                  message: "Ocurrió un error durante el envío de la petición",
+                                                  preferredStyle: .Alert)
                         alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
                         self.presentViewController(alert, animated: true, completion: nil)
                         // Mostrar Alert - FIN
                     }
                 }
-                else{
-                    print("ocurrio un error durante el envio de la peticion")
-                    // Mostrar Alert - INI
-                    let alert = UIAlertController(title: "Resultado",
-                                                  message: "Ocurrió un error durante el envío de la petición",
-                                                  preferredStyle: .Alert)
-                    alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
-                    self.presentViewController(alert, animated: true, completion: nil)
-                    // Mostrar Alert - FIN
-                }
+                let dt = sesion.dataTaskWithURL(url!, completionHandler: bloque1Asyncronico)
+                dt.resume()
+                print("peticion asincronica iniciada")
+                // Peticion / Request - FIN
             }
-            let dt = sesion.dataTaskWithURL(url!, completionHandler: bloque1Asyncronico)
-            dt.resume()
-            print("peticion asincronica iniciada")
-            // Peticion / Request - FIN
-            
-            
+            else{
+                print("campo ISBN esta vacio")
+                // Mostrar Alert - INI
+                let alert = UIAlertController(title: "Validación",
+                                          message: "Por favor ingrese un ISBN no vacío",
+                                          preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
+                self.presentViewController(alert, animated: true, completion: nil)
+                // Mostrar Alert - FIN
+            }
         }
         else{
-            print("campo ISBN esta vacio")
+            print("sin red disponible")
             // Mostrar Alert - INI
-            let alert = UIAlertController(title: "Validación",
-                                          message: "Por favor ingrese un ISBN no vacío",
+            let alert = UIAlertController(title: "Conexión",
+                                          message: "No hay servicio de red",
                                           preferredStyle: .Alert)
             alert.addAction(UIAlertAction(title: "Aceptar", style: .Cancel, handler: nil))
             self.presentViewController(alert, animated: true, completion: nil)
             // Mostrar Alert - FIN
         }
-
     }
+    
+    func isNetworkAvailable() -> Bool
+    {
+        var zeroAddress = sockaddr_in()
+        zeroAddress.sin_len = UInt8(sizeofValue(zeroAddress))
+        zeroAddress.sin_family = sa_family_t(AF_INET)
+        
+        guard let defaultRouteReachability = withUnsafePointer(&zeroAddress, {
+            SCNetworkReachabilityCreateWithAddress(nil, UnsafePointer($0))
+        }) else {
+            return false
+        }
+        
+        var flags : SCNetworkReachabilityFlags = []
+        if !SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags) {
+            return false
+        }
+        
+        let isReachable = flags.contains(.Reachable)
+        let needsConnection = flags.contains(.ConnectionRequired)
+        
+        return (isReachable && !needsConnection)
+    }
+
     
 }
 

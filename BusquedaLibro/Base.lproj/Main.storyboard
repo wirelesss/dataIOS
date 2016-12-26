@@ -77,6 +77,15 @@
                                     <action selector="actionSearch:" destination="BYZ-38-t0r" eventType="touchUpInside" id="63j-u7-OMs"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BJv-Ha-Ell">
+                                <rect key="frame" x="155" y="135" width="65" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="15"/>
+                                <state key="normal" title="Limpiar"/>
+                                <connections>
+                                    <action selector="actionLimpiar:" destination="BYZ-38-t0r" eventType="touchUpInside" id="BWS-aS-qAK"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <accessibility key="accessibilityConfiguration" hint="Search for ISBN"/>
